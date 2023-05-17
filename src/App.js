@@ -110,15 +110,24 @@ function App() {
     fetchArticles(setArticles, setSummaries);
   }, []);
 
+  // https://getbootstrap.com/docs/4.3/components/card/
   return (
     <div className="App">
       {summaries.map((summary, summaryIndex) => (
-        <div key={summaryIndex} className="card text-center">
-          <div className="card-header">tagesschau.de</div>
-          <div className="card-body">
-            <p className="card-text">{summary}</p>
+        <div key={summaryIndex} className="card text-center" style={{margin: "90px"}}>
+          <div className="row no-gutters">
+            <div className="col-md-4">
+              <img src="..." className="card-img" alt="..." style={{margin: "20px"}} />
+            </div>
+            <div className="col-md-8">
+              <div className="card-body">
+                <p className="card-text">{summary}</p>
+                <p className="card-text">
+                  <small className="text-muted">17.05.2023 18:16 Uhr</small>
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="card-footer text-muted">17.05.2023 18:16 Uhr</div>
         </div>
       ))};
     </div>
