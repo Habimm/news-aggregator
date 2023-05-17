@@ -1,3 +1,4 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
@@ -44,34 +45,30 @@ async function getArticle(url) {
   return newsText.join('\n');
 }
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const fetchArticles = async (setArticles, setSummaries) => {
+  const links = await fetchLinks(5);
+  console.log(links)
+  const fetchedArticles = [];
+  const computedSummaries = [];
 
-function App() {
-  const [articles, setArticles] = useState([]);
-  const [summaries, setSummaries] = useState([]);
+  for (const link of links) {
+    const article = await getArticle(link);
+    fetchedArticles.push(article);
+    setArticles(fetchedArticles);
+    console.log(fetchedArticles)
 
-  useEffect(() => {
-    const fetchArticles = async () => {
-      const links = await fetchLinks(5);
-      const fetchedArticles = [];
-      const computedSummaries = [];
+    const configuration = new Configuration({
+      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
+    const articleWithPrompt = `
+      FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
 
-      for (const link of links) {
-        const article = await getArticle(link);
-        fetchedArticles.push(article);
-        setArticles(fetchedArticles);
+      ${article}
+    `;
 
-        const configuration = new Configuration({
-          apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-        });
-        const openai = new OpenAIApi(configuration);
-        const articleWithPrompt = `
-          FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
-
-          ${article}
-        `;
+    while (true) {  // infinite loop, break condition is inside
+      try {
 
         // const response = {
         //   data: {
@@ -84,32 +81,48 @@ function App() {
         //     ],
         //   },
         // };
-        await delay(60000);
+        const delay = (ms) => {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        await delay(30000);  // Always wait before trying
+        const truncatedArticleWithPrompt = articleWithPrompt.substring(0, 5500);
         const response = await openai.createChatCompletion({
           model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: articleWithPrompt }],
+          messages: [{ role: 'user', content: truncatedArticleWithPrompt }],
         });
 
         const computedSummary = response.data.choices[0].message.content;
         computedSummaries.push(computedSummary);
         setSummaries(computedSummaries);
+        break;  // exit loop if no error
+      } catch (error) {
+        console.log(error);
       }
-    };
+    }
+  }
+};
 
-    fetchArticles();
+function App() {
+  const [articles, setArticles] = useState([]);
+  const [summaries, setSummaries] = useState([]);
+
+  useEffect(() => {
+    fetchArticles(setArticles, setSummaries);
   }, []);
-
 
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Neuigkeiten in KURZ</h1>
-        <p>{summaries}</p>
-        <br />
-        <pre>{articles}</pre>
-      </header>
+      {summaries.map((summary, summaryIndex) => (
+        <div key={summaryIndex} className="card text-center">
+          <div className="card-header">tagesschau.de</div>
+          <div className="card-body">
+            <p className="card-text">{summary}</p>
+          </div>
+          <div className="card-footer text-muted">17.05.2023 18:16 Uhr</div>
+        </div>
+      ))};
     </div>
-  );
+  )
 }
 
 export default App;
