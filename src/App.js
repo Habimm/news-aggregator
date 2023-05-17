@@ -44,6 +44,10 @@ async function getArticle(url) {
   return newsText.join('\n');
 }
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function App() {
   const [articles, setArticles] = useState([]);
   const [summaries, setSummaries] = useState([]);
@@ -52,51 +56,49 @@ function App() {
     const fetchArticles = async () => {
       const links = await fetchLinks(5);
       const fetchedArticles = [];
+      const computedSummaries = [];
 
       for (const link of links) {
         const article = await getArticle(link);
         fetchedArticles.push(article);
-        await fetchData(article);
-      }
+        setArticles(fetchedArticles);
 
-      setArticles(fetchedArticles);
+        const configuration = new Configuration({
+          apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+        });
+        const openai = new OpenAIApi(configuration);
+        const articleWithPrompt = `
+          FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
+
+          ${article}
+        `;
+
+        // const response = {
+        //   data: {
+        //     choices: [
+        //       {
+        //         message: {
+        //           content: '123',
+        //         },
+        //       },
+        //     ],
+        //   },
+        // };
+        await delay(60000);
+        const response = await openai.createChatCompletion({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: articleWithPrompt }],
+        });
+
+        const computedSummary = response.data.choices[0].message.content;
+        computedSummaries.push(computedSummary);
+        setSummaries(computedSummaries);
+      }
     };
 
     fetchArticles();
   }, []);
 
-  const fetchData = async (article) => {
-    const configuration = new Configuration({
-      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-    });
-
-    const openai = new OpenAIApi(configuration);
-
-    const articleWithPrompt = `
-      FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
-
-      ${article}
-    `;
-
-    const response = {
-      data: {
-        choices: [
-          {
-            message: {
-              content: '123',
-            },
-          },
-        ],
-      },
-    };
-    // const response = await openai.createChatCompletion({
-    //   model: 'gpt-3.5-turbo',
-    //   messages: [{ role: 'user', content: articleWithPrompt }],
-    // });
-
-    const content = response.data.choices[0].message.content;
-    setSummaries(prevSummaries => [...prevSummaries, content]);
-  };
 
   return (
     <div className="App">
