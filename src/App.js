@@ -5,23 +5,35 @@ import React, { useEffect, useState } from "react";
 import { Configuration, OpenAIApi } from 'openai';
 
 async function fetchLinks(numberOfLinks) {
-    const url = 'https://www.tagesschau.de';
-    const response = await axios.get(url);
-    const $ = cheerio.load(response.data);
+  const url = 'https://www.tagesschau.de';
+  const response = await axios.get(url);
+  const $ = cheerio.load(response.data);
 
-    const links = [];
+  const teaserLinks = $('a.teaser__link').toArray();
+  const articleInfopieces = [];
 
-    $('a.teaser__link').each((i, link) => {
-        if (links.length < numberOfLinks) {
-          const href = $(link).attr('href');
-          links.push(url + href);
-        }
+  for (let i = 0; i < numberOfLinks && i < teaserLinks.length; i++) {
+    const href = $(teaserLinks[i]).attr('href');
+    const fullLink = url + href;
+
+    // Fetch additional data for this link
+    const articleResponse = await axios.get(fullLink);
+    const article$ = cheerio.load(articleResponse.data);
+
+    const imageSrc = article$('img.ts-image').attr('src');
+    const date = article$('p.metatextline').text();
+
+    articleInfopieces.push({
+      articleUrl: fullLink,
+      imageSrc: imageSrc,
+      date: date
     });
+  }
 
-    return links;
+  return articleInfopieces;
 }
 
-async function getArticle(url) {
+async function getArticleText(url) {
   let newsText = [];
 
   const response = await axios.get(url);
@@ -45,14 +57,16 @@ async function getArticle(url) {
   return newsText.join('\n');
 }
 
-const fetchArticles = async (setArticles, setSummaries) => {
-  const links = await fetchLinks(5);
-  console.log(links)
+const fetchArticles = async (setArticles, setSummaries, setArticleInfopieces) => {
+  const articleInfopieces = await fetchLinks(5);
+  setArticleInfopieces(articleInfopieces);
+  console.log(articleInfopieces)
   const fetchedArticles = [];
   const computedSummaries = [];
 
-  for (const link of links) {
-    const article = await getArticle(link);
+  for (const articleInfopiece of articleInfopieces) {
+    var articleUrl = articleInfopiece['articleUrl']
+    const article = await getArticleText(articleUrl);
     fetchedArticles.push(article);
     setArticles(fetchedArticles);
     console.log(fetchedArticles)
@@ -105,9 +119,10 @@ const fetchArticles = async (setArticles, setSummaries) => {
 function App() {
   const [articles, setArticles] = useState([]);
   const [summaries, setSummaries] = useState([]);
+  const [articleInfopieces, setArticleInfopieces] = useState([]);
 
   useEffect(() => {
-    fetchArticles(setArticles, setSummaries);
+    fetchArticles(setArticles, setSummaries, setArticleInfopieces);
   }, []);
 
   // https://getbootstrap.com/docs/4.3/components/card/
