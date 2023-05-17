@@ -3,27 +3,24 @@ import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
 import { Configuration, OpenAIApi } from 'openai';
 
-async function fetchLinks() {
-    const url = 'https://www.tagesschau.de'; // replace with your URL
+async function fetchLinks(numberOfLinks) {
+    const url = 'https://www.tagesschau.de';
     const response = await axios.get(url);
     const $ = cheerio.load(response.data);
 
     const links = [];
 
     $('a.teaser__link').each((i, link) => {
-        const href = $(link).attr('href');
-        links.push(url + href);
+        if (links.length < numberOfLinks) {
+          const href = $(link).attr('href');
+          links.push(url + href);
+        }
     });
 
     return links;
 }
 
-fetchLinks()
-    .then(links => console.log(links))
-    .catch(err => console.error(err));
-
 async function getArticle(url) {
-  const url = 'https://www.tagesschau.de/inland/urteil-gruenes-gewoelbe-100.html';
   let newsText = [];
 
   const response = await axios.get(url);
@@ -48,8 +45,8 @@ async function getArticle(url) {
 }
 
 function App() {
-  const [article, setArticle] = useState('');
-  const [responseContent, setResponseContent] = useState('');
+  const [article, setArticle] = useState([]);
+  const [responseContent, setResponseContent] = useState([]);
 
   useEffect(() => {
     const fetchArticle = async () => {
