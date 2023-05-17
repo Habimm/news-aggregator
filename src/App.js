@@ -45,18 +45,24 @@ async function getArticle(url) {
 }
 
 function App() {
-  const [article, setArticle] = useState([]);
-  const [responseContent, setResponseContent] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [summaries, setSummaries] = useState([]);
 
   useEffect(() => {
-    const fetchArticle = async () => {
-      const url = 'https://www.tagesschau.de/inland/urteil-gruenes-gewoelbe-100.html';
-      const homeNeuigkeitGesamttext = await getArticle(url);
-      setArticle(homeNeuigkeitGesamttext);
-      fetchData(homeNeuigkeitGesamttext);
+    const fetchArticles = async () => {
+      const links = await fetchLinks(5);
+      const fetchedArticles = [];
+
+      for (const link of links) {
+        const article = await getArticle(link);
+        fetchedArticles.push(article);
+        await fetchData(article);
+      }
+
+      setArticles(fetchedArticles);
     };
 
-    fetchArticle();
+    fetchArticles();
   }, []);
 
   const fetchData = async (article) => {
@@ -89,26 +95,16 @@ function App() {
     // });
 
     const content = response.data.choices[0].message.content;
-    setResponseContent(content);
+    setSummaries(prevSummaries => [...prevSummaries, content]);
   };
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>OpenAI Integration</h1>
-        <p>{responseContent}</p>
+        <h1>Neuigkeiten in KURZ</h1>
+        <p>{summaries}</p>
         <br />
-        <pre>{article}</pre>
-        <div className="container">
-          <div className="row">
-            <div className="col-md-6">
-              <h1>Hello</h1>
-            </div>
-            <div className="col-md-6">
-              <p>World</p>
-            </div>
-          </div>
-        </div>
+        <pre>{articles}</pre>
       </header>
     </div>
   );
