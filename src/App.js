@@ -37,24 +37,22 @@ async function getArticleText(articleUrl) {
   let newsText = [];
 
   const response = await axios.get(articleUrl);
+
   const $ = cheerio.load(response.data);
 
-  const ancestor = $('article.container.content-wrapper__group');
+  const h1Text = $('h1[data-testid="headline"]').text().trim();
+  newsText.push(h1Text);
 
-  const classes = ['seitenkopf__headline', 'meldung__subhead', 'textabsatz', 'tag-btn'];
+  const pText = $('p#article-summary').text().trim();
+  newsText.push(pText);
 
-  ancestor.find('h1, h2, p, a').each((i, element) => {
-    const elClass = $(element).attr('class') || '';
-    if(classes.some(cls => elClass.includes(cls))) {
-      newsText.push($(element).text().trim());
-    }
+  $('.StoryBodyCompanionColumn').each((i, element) => {
+    newsText.push($(element).text().trim());
   });
 
-  ancestor.find('p, h2').each(() => {
-    newsText.push('');
-  });
+  var wholeNewsText = newsText.join('\n');
 
-  return newsText.join('\n');
+  return wholeNewsText;
 }
 
 const fetchArticles = async (setArticles) => {
@@ -74,25 +72,27 @@ const summarizeArticle = async (articles, setArticles) => {
     }
 
     var articleUrl = article['url'];
+    articleUrl = 'https://www.nytimes.com/2023/05/18/world/asia/g7-ukraine-artificial-intelligence.html';
+    articleUrl = 'https://thingproxy.freeboard.io/fetch/https://www.nytimes.com/2023/05/18/world/asia/g7-ukraine-artificial-intelligence.html';
     var articleText = await getArticleText(articleUrl);
     articleText = articleText.trim();
+    articleText = articleText.substring(0, 5500);
 
-    const shorterArticleText = articleText.substring(0, 5500);
+    let articleWithPrompt = "FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!";
+    articleWithPrompt += "\n\n";
+    articleWithPrompt += articleText;
 
     // The newline at the end of the prompt is ESSENTIAL. Without it, the model might ignore the prompt
     // at the beginning of the user content's message and just complete the last sentence
     // in the scraped article.
-    const shorterArticleWithPrompt = `
-      FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
-
-      ${shorterArticleText}
-    `;
+    articleWithPrompt += "\n";
 
     try {
       const openaiBody = {
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: shorterArticleWithPrompt }],
+        messages: [{ role: 'user', content: articleWithPrompt }],
       };
+      console.log(openaiBody);
 
       const headers = {
         "Content-Type": "application/json",
