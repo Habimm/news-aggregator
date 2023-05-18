@@ -136,15 +136,13 @@ function App() {
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
           <div className="row no-gutters">
             <div className="col-md-4">
-              <img src="..." className="card-img" alt="..." style={{margin: "20px"}} />
+              <img src={article.imageSrc} className="card-img" alt="..." style={{margin: "20px"}} />
             </div>
             <div className="col-md-8">
               <div className="card-body">
                 <p className="card-text">{article.summary}</p>
-                <p className="card-text">{article.url}</p>
-                <p className="card-text">
-                  <small className="text-muted">17.05.2023 18:16 Uhr</small>
-                </p>
+                <p className="card-text"><a href={article.url} target="_blank" rel="noopener noreferrer" className="card-text">Full text</a></p>
+                <p className="card-footer text-muted" style={{"margin-top": "15%"}}>{article.date}</p>
               </div>
             </div>
           </div>
