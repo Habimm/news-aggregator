@@ -61,15 +61,21 @@ async function getArticleText(articleUrl) {
 const fetchArticles = async (setArticles) => {
   const articles = await fetchLinks(5);
 
+
   for (const article of articles) {
+
+    console.log(article);
+
     if (article.summary) {
-      console.log("Already summarized article:");
-      console.log(article);
+      console.log("Already summarized article!");
       continue;
     }
 
+
     var articleUrl = article['url'];
-    const articleText = await getArticleText(articleUrl);
+    var articleText = await getArticleText(articleUrl);
+    articleText = articleText.trim();
+    console.log({"a": articleText});
 
     const configuration = new Configuration({
       apiKey: process.env.REACT_APP_OPENAI_API_KEY,
@@ -89,7 +95,7 @@ const fetchArticles = async (setArticles) => {
       });
       const computedSummary = response.data.choices[0].message.content;
       article['summary'] = computedSummary;
-      console.log(articles);
+      setArticles(articles);
     } catch (error) {
       console.error(`An error occurred during the API call: ${error}`);
       return;
@@ -102,14 +108,12 @@ const fetchArticles = async (setArticles) => {
 function App() {
   const [articles, setArticles] = useState([]);
 
-  useEffect(() => {
-    fetchArticles(setArticles);
-  }, []);
-
   // https://getbootstrap.com/docs/4.3/components/card/
   return (
     <div className="App">
-      <button type="button" className="btn btn-primary">Primary</button>
+      <button type="button" className="btn btn-primary" onClick={() => fetchArticles(setArticles)}>
+        Refresh
+      </button>
       {articles.map((article, articleIndex) => (
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
           <div className="row no-gutters">
@@ -118,7 +122,7 @@ function App() {
             </div>
             <div className="col-md-8">
               <div className="card-body">
-                <p className="card-text">{article}</p>
+                <p className="card-text">{article.summary}</p>
                 <p className="card-text">
                   <small className="text-muted">17.05.2023 18:16 Uhr</small>
                 </p>
