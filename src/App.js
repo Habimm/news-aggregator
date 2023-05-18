@@ -81,38 +81,58 @@ const fetchArticles = async (setArticles, setSummaries, setArticleInfopieces) =>
       ${article}
     `;
 
-    while (true) {  // infinite loop, break condition is inside
-      try {
+    // const response = {
+    //   data: {
+    //     choices: [
+    //       {
+    //         message: {
+    //           content: '123',
+    //         },
+    //       },
+    //     ],
+    //   },
+    // };
+    const delay = (ms) => {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-        // const response = {
-        //   data: {
-        //     choices: [
-        //       {
-        //         message: {
-        //           content: '123',
-        //         },
-        //       },
-        //     ],
-        //   },
-        // };
-        const delay = (ms) => {
-          return new Promise(resolve => setTimeout(resolve, ms));
-        }
-        await delay(30000);  // Always wait before trying
-        const truncatedArticleWithPrompt = articleWithPrompt.substring(0, 5500);
+    const MAX_RETRIES = 10; // Maximum number of retries
+    let attempt = 0; // Current attempt
+
+    const sendRequest = async (sendArticleWithPrompt) => {
+      const truncatedArticleWithPrompt = sendArticleWithPrompt.substring(0, 5500);
+
+      try {
         const response = await openai.createChatCompletion({
           model: 'gpt-3.5-turbo',
           messages: [{ role: 'user', content: truncatedArticleWithPrompt }],
         });
 
-        const computedSummary = response.data.choices[0].message.content;
-        computedSummaries.push(computedSummary);
-        setSummaries(computedSummaries);
-        break;  // exit loop if no error
+        // If the request is successful, return the response
+        return response;
       } catch (error) {
-        console.log(error);
+        if (error.response && error.response.status === 429) {
+          if (attempt < MAX_RETRIES) {
+            // Calculate delay: 2^attempt * 1000 ms
+            const backoffTime = Math.pow(2, attempt) * 1000;
+            console.log(`Received HTTP 429. Retrying in ${backoffTime}ms...`);
+            await delay(backoffTime);
+            attempt++;
+            return sendRequest(sendArticleWithPrompt);
+          } else {
+            throw new Error('Maximum retry attempts exceeded.');
+          }
+        } else {
+          // If the error is something other than 429, throw the error
+          throw error;
+        }
       }
-    }
+    };
+    const response = await sendRequest(articleWithPrompt);
+    const computedSummary = response.data.choices[0].message.content;
+    computedSummaries.push(computedSummary);
+    setSummaries(computedSummaries);
+    console.log(computedSummaries);
   }
 };
 
@@ -125,9 +145,12 @@ function App() {
     fetchArticles(setArticles, setSummaries, setArticleInfopieces);
   }, []);
 
+  console.log(articleInfopieces)
+
   // https://getbootstrap.com/docs/4.3/components/card/
   return (
     <div className="App">
+      <button type="button" class="btn btn-primary">Primary</button>
       {summaries.map((summary, summaryIndex) => (
         <div key={summaryIndex} className="card text-center" style={{margin: "90px"}}>
           <div className="row no-gutters">
@@ -144,7 +167,7 @@ function App() {
             </div>
           </div>
         </div>
-      ))};
+      ))}
     </div>
   )
 }
