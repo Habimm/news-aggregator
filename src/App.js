@@ -2,7 +2,6 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
-import { Configuration, OpenAIApi } from 'openai';
 
 async function fetchLinks(numberOfLinks) {
   const baseUrl = 'https://www.tagesschau.de';
@@ -59,9 +58,9 @@ async function getArticleText(articleUrl) {
 }
 
 const fetchArticles = async (setArticles) => {
-  setArticles([]);
   const fetchedArticles = await fetchLinks(5);
-  setArticles(fetchedArticles);
+  const newArticles = [...fetchedArticles];
+  setArticles(newArticles);
 }
 
 const summarizeArticle = async (articles, setArticles) => {
@@ -118,10 +117,12 @@ const summarizeArticle = async (articles, setArticles) => {
 };
 
 function App() {
-  const [articles, setArticles] = useState([]);
+  var stuffFromLocalStorage = JSON.parse(localStorage.getItem('articles')) || [];
+  const [articles, setArticles] = useState(stuffFromLocalStorage);
 
   useEffect(() => {
     console.log(articles);
+    localStorage.setItem('articles', JSON.stringify(articles));
   }, [articles]);
 
   return (
@@ -142,7 +143,7 @@ function App() {
               <div className="card-body">
                 <p className="card-text">{article.summary}</p>
                 <p className="card-text"><a href={article.url} target="_blank" rel="noopener noreferrer" className="card-text">Full text</a></p>
-                <p className="card-footer text-muted" style={{"margin-top": "15%"}}>{article.date}</p>
+                <p className="card-footer text-muted" style={{"marginTop": "15%"}}>{article.date}</p>
               </div>
             </div>
           </div>
