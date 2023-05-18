@@ -59,11 +59,14 @@ async function getArticleText(articleUrl) {
 }
 
 const fetchArticles = async (setArticles) => {
-  const articles = await fetchLinks(5);
+  setArticles([]);
+  const fetchedArticles = await fetchLinks(5);
+  setArticles(fetchedArticles);
+}
 
-
-  for (const article of articles) {
-
+const summarizeArticle = async (articles, setArticles) => {
+  for (let index = 0; index < articles.length; index++) {
+    var article = articles[index];
     console.log(article);
 
     if (article.summary) {
@@ -71,34 +74,43 @@ const fetchArticles = async (setArticles) => {
       continue;
     }
 
-
     var articleUrl = article['url'];
     var articleText = await getArticleText(articleUrl);
     articleText = articleText.trim();
-    console.log({"a": articleText});
 
-    const configuration = new Configuration({
-      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-    });
-    const openai = new OpenAIApi(configuration);
-    const articleWithPrompt = `
+    const shorterArticleText = articleText.substring(0, 5500);
+
+    // The newline at the end of the prompt is ESSENTIAL. Without it, the model might ignore the prompt
+    // at the beginning of the user content's message and just complete the last sentence
+    // in the scraped article.
+    const shorterArticleWithPrompt = `
       FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!
 
-      ${articleText}
+      ${shorterArticleText}
     `;
 
-    const truncatedArticleWithPrompt = articleWithPrompt.substring(0, 5500);
     try {
-      const response = await openai.createChatCompletion({
+      const openaiBody = {
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: truncatedArticleWithPrompt }],
-      });
+        messages: [{ role: 'user', content: shorterArticleWithPrompt }],
+      };
+
+      const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+      };
+
+      const response = await axios.post("https://api.openai.com/v1/chat/completions", openaiBody, {headers: headers});
       const computedSummary = response.data.choices[0].message.content;
-      article['summary'] = computedSummary;
-      setArticles(articles);
+
+      const newArticles = [...articles];
+      newArticles[index]['summary'] = computedSummary;
+      setArticles(newArticles);
+
+      break;
     } catch (error) {
       console.error(`An error occurred during the API call: ${error}`);
-      return;
+      break;
     }
   }
 
@@ -108,11 +120,17 @@ const fetchArticles = async (setArticles) => {
 function App() {
   const [articles, setArticles] = useState([]);
 
-  // https://getbootstrap.com/docs/4.3/components/card/
+  useEffect(() => {
+    console.log(articles);
+  }, [articles]);
+
   return (
     <div className="App">
-      <button type="button" className="btn btn-primary" onClick={() => fetchArticles(setArticles)}>
-        Refresh
+      <button type="button" className="btn btn-primary" onClick={() => summarizeArticle(articles, setArticles)}>
+        Summarize article
+      </button>
+      <button type="button" className="btn btn-danger" onClick={() => fetchArticles(setArticles)}>
+        Fetch articles
       </button>
       {articles.map((article, articleIndex) => (
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
@@ -123,6 +141,7 @@ function App() {
             <div className="col-md-8">
               <div className="card-body">
                 <p className="card-text">{article.summary}</p>
+                <p className="card-text">{article.url}</p>
                 <p className="card-text">
                   <small className="text-muted">17.05.2023 18:16 Uhr</small>
                 </p>
