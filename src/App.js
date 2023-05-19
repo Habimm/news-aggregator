@@ -38,7 +38,6 @@ async function addArticle(articles, setArticles, openaiApiKeyRef, promptRef) {
 
   const href = $(teaserLinks[articles.length]).attr('href');
   var fullLink = (href.startsWith('http')) ? href : baseUrl + href;
-  console.log(fullLink)
 
   // Fetch additional data for this link
   const articleResponse = await axios.get(fullLink);
@@ -113,51 +112,50 @@ function App() {
     localStorage.setItem('articles', JSON.stringify(articles));
   }, [articles]);
 
-  const handleDefaultPromptClick = () => {
-    const defaultPrompt = "FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!";
-    promptRef.current.value = defaultPrompt;
+  const handleDefaultPromptClick = (promptOption) => {
+    promptRef.current.value = promptOption;
   };
 
   return (
     <div className="App night-sky-background">
       <button
         type="button"
-        className="btn btn-danger plus-button"
+        className="btn btn-danger plus-button btn-lg"
         onClick={() => addArticle(articles, setArticles, openaiApiKeyRef, promptRef)}
       >
-        Add article
+        Add article ➕
       </button>
 
       <div className="container">
-        <div className="row">
-          <div className="col">
-            <div className="form-group">
-              <label htmlFor="openaiApiKey" className="custom-label">OpenAI API Key</label>
-              <input type="text" className="form-control" id="openaiApiKey" placeholder="sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv" ref={openaiApiKeyRef} />
-            </div>
-          </div>
-          <div className="col">
-            <div className="row">
+          <div className="row">
+            <div className="col">
               <div className="form-group">
-                <label htmlFor="prompt" className="custom-label">Prompt</label>
-                <input type="text" className="form-control" id="prompt" ref={promptRef} />
+                <label htmlFor="openaiApiKey" className="custom-label">OpenAI API Key</label>
+                <input type="text" className="form-control" id="openaiApiKey" placeholder="sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv" ref={openaiApiKeyRef} />
               </div>
-              <div className="col">
-                <div className="dropdown">
-                  <button className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Select Prompt
-                  </button>
-                  <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 1")}>Prompt 1</a>
-                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 2")}>Prompt 2</a>
-                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 3")}>Prompt 3</a>
+            </div>
+            <div className="col">
+              <div className="row">
+                <div className="form-group">
+                  <label htmlFor="prompt" className="custom-label">Prompt</label>
+                  <input type="text" className="form-control" id="prompt" ref={promptRef} />
+                </div>
+                <div className="col">
+                  <div className="dropdown">
+                    <button className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Select Prompt
+                    </button>
+                    <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!")}>FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!</a>
+                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.")}>summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.</a>
+                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Summarize in one word:")}>Summarize in one word:</a>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
       {articles.map((article, articleIndex) => (
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
