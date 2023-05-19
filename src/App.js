@@ -1,9 +1,9 @@
 import "./App.css";
-import "bootstrap/dist/js/bootstrap.bundle.min";
+import "bootstrap/dist/js/bootstrap.bundle.min"; // for the dropdown menu
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import cheerio from 'cheerio';
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 
 async function getArticleText(articleUrl) {
   let newsText = [];
