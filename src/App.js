@@ -3,36 +3,6 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
 
-async function fetchLinks(numberOfLinks) {
-  const baseUrl = 'https://www.tagesschau.de';
-  const response = await axios.get(baseUrl);
-  const $ = cheerio.load(response.data);
-
-  const teaserLinks = $('a.teaser__link').toArray();
-  const articles = [];
-
-  for (let i = 0; i < numberOfLinks && i < teaserLinks.length; i++) {
-    const href = $(teaserLinks[i]).attr('href');
-    const fullLink = baseUrl + href;
-
-    // Fetch additional data for this link
-    const articleResponse = await axios.get(fullLink);
-    const article$ = cheerio.load(articleResponse.data);
-
-    const imageSrc = article$('img.ts-image').attr('src');
-    const date = article$('p.metatextline').text();
-
-    articles.push({
-      url: fullLink,
-      imageSrc: imageSrc,
-      date: date,
-      summary: null,
-    });
-  }
-
-  return articles;
-}
-
 async function getArticleText(articleUrl) {
   let newsText = [];
 
@@ -57,10 +27,35 @@ async function getArticleText(articleUrl) {
   return newsText.join('\n');
 }
 
-const fetchArticles = async (setArticles) => {
-  const fetchedArticles = await fetchLinks(5);
-  const newArticles = [...fetchedArticles];
-  setArticles(newArticles);
+async function fetchLink(articles, setArticles) {
+  const baseUrl = 'https://www.tagesschau.de';
+  const response = await axios.get(baseUrl);
+  const $ = cheerio.load(response.data);
+
+  const teaserLinks = $('a.teaser__link').toArray();
+
+  const href = $(teaserLinks[articles.length]).attr('href');
+  const fullLink = baseUrl + href;
+  console.log(fullLink)
+
+  // Fetch additional data for this link
+  const articleResponse = await axios.get(fullLink);
+  const article$ = cheerio.load(articleResponse.data);
+
+  const imageSrc = article$('img.ts-image').attr('src');
+  const date = article$('p.metatextline').text();
+
+  var article = {
+    url: fullLink,
+    imageSrc: imageSrc,
+    date: date,
+    summary: null,
+  };
+
+  const newArticles = [...articles, article];
+  summarizeArticle(newArticles, setArticles);
+
+  return article;
 }
 
 const summarizeArticle = async (articles, setArticles) => {
@@ -127,11 +122,8 @@ function App() {
 
   return (
     <div className="App">
-      <button type="button" className="btn btn-primary" onClick={() => summarizeArticle(articles, setArticles)}>
-        Summarize article
-      </button>
-      <button type="button" className="btn btn-danger" onClick={() => fetchArticles(setArticles)}>
-        Fetch articles
+      <button type="button" className="btn btn-danger" onClick={() => fetchLink(articles, setArticles)}>
+        Add article
       </button>
       {articles.map((article, articleIndex) => (
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
