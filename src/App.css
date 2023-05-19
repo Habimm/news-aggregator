@@ -1,3 +1,8 @@
+.resizable-input {
+  resize: vertical; /* or 'horizontal' if you want to allow horizontal resizing */
+  height: 150px; /* Adjust the height to make the input field bigger */
+}
+
 .custom-label {
   color: yellow; /* Choose the desired color */
   font-weight: bold; /* Add any other desired styles */
