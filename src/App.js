@@ -1,6 +1,6 @@
 import "./App.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
 import "bootstrap/dist/js/bootstrap.bundle.min";
+import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import React, { useEffect, useState, useRef } from "react";
@@ -107,8 +107,6 @@ function App() {
   const promptRef = useRef(null);
 
   useEffect(() => {
-    console.log(articles);
-    console.log(process.env.REACT_APP_OPENAI_API_KEY);
     localStorage.setItem('articles', JSON.stringify(articles));
   }, [articles]);
 
