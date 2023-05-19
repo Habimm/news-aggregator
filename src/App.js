@@ -4,29 +4,32 @@ import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
 
 async function fetchLinks(numberOfLinks) {
-  const baseUrl = 'https://www.tagesschau.de';
-  const response = await axios.get(baseUrl);
+  const baseUrl = 'https://www.nytimes.com/';
+  const corsProxyUrl = 'https://thingproxy.freeboard.io/fetch/';
+  const baseUrlWithCorsHeaders = `${corsProxyUrl}${baseUrl}`;
+
+  const response = await axios.get(baseUrlWithCorsHeaders);
   const $ = cheerio.load(response.data);
 
-  const teaserLinks = $('a.teaser__link').toArray();
+  const storyLinks = $('section.story-wrapper a').toArray();
   const articles = [];
 
-  for (let i = 0; i < numberOfLinks && i < teaserLinks.length; i++) {
-    const href = $(teaserLinks[i]).attr('href');
-    const fullLink = baseUrl + href;
+  for (let i = 0; i < numberOfLinks && i < storyLinks.length; i++) {
+    const href = $(storyLinks[i]).attr('href');
+    var fullLink = (href.startsWith('http')) ? href : baseUrl + href;
+    fullLink = `${corsProxyUrl}${fullLink}`;
 
     // Fetch additional data for this link
     const articleResponse = await axios.get(fullLink);
     const article$ = cheerio.load(articleResponse.data);
 
-    const imageSrc = article$('img.ts-image').attr('src');
-    const date = article$('p.metatextline').text();
+    const title = article$('h1').text();  // Change this line based on the actual CSS selector for the title
+    const date = article$('time').attr('datetime');  // Change this line based on the actual CSS selector for the date
 
     articles.push({
       url: fullLink,
-      imageSrc: imageSrc,
+      title: title,
       date: date,
-      summary: null,
     });
   }
 
@@ -72,8 +75,6 @@ const summarizeArticle = async (articles, setArticles) => {
     }
 
     var articleUrl = article['url'];
-    articleUrl = 'https://www.nytimes.com/2023/05/18/world/asia/g7-ukraine-artificial-intelligence.html';
-    articleUrl = 'https://thingproxy.freeboard.io/fetch/https://www.nytimes.com/2023/05/18/world/asia/g7-ukraine-artificial-intelligence.html';
     var articleText = await getArticleText(articleUrl);
     articleText = articleText.trim();
     articleText = articleText.substring(0, 5500);
