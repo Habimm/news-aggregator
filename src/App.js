@@ -1,7 +1,8 @@
+import "./App.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import cheerio from 'cheerio';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 async function getArticleText(articleUrl) {
   let newsText = [];
@@ -27,7 +28,7 @@ async function getArticleText(articleUrl) {
   return newsText.join('\n');
 }
 
-async function fetchLink(articles, setArticles) {
+async function fetchLink(articles, setArticles, openaiApiKeyRef, promptRef) {
   const baseUrl = 'https://www.tagesschau.de';
   const response = await axios.get(baseUrl);
   const $ = cheerio.load(response.data);
@@ -35,7 +36,7 @@ async function fetchLink(articles, setArticles) {
   const teaserLinks = $('a.teaser__link').toArray();
 
   const href = $(teaserLinks[articles.length]).attr('href');
-  const fullLink = baseUrl + href;
+  var fullLink = (href.startsWith('http')) ? href : baseUrl + href;
   console.log(fullLink)
 
   // Fetch additional data for this link
@@ -53,12 +54,12 @@ async function fetchLink(articles, setArticles) {
   };
 
   const newArticles = [...articles, article];
-  summarizeArticle(newArticles, setArticles);
+  summarizeArticle(newArticles, setArticles, openaiApiKeyRef, promptRef);
 
   return article;
 }
 
-const summarizeArticle = async (articles, setArticles) => {
+const summarizeArticle = async (articles, setArticles, openaiApiKeyRef, promptRef) => {
   for (let index = 0; index < articles.length; index++) {
     var article = articles[index];
     console.log(article);
@@ -68,12 +69,18 @@ const summarizeArticle = async (articles, setArticles) => {
       continue;
     }
 
+    const openaiApiKey = openaiApiKeyRef.current.value;
+    const prompt = promptRef.current.value;
+
+    console.log("OpenAI API Key:", openaiApiKey);
+    console.log("Prompt:", prompt);
+
     var articleUrl = article['url'];
     var articleText = await getArticleText(articleUrl);
     articleText = articleText.trim();
     articleText = articleText.substring(0, 5500);
 
-    let articleWithPrompt = "FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!";
+    let articleWithPrompt = prompt;
     articleWithPrompt += "\n\n";
     articleWithPrompt += articleText;
 
@@ -91,7 +98,7 @@ const summarizeArticle = async (articles, setArticles) => {
 
       const headers = {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${openaiApiKey}`,
       };
 
       const response = await axios.post("https://api.openai.com/v1/chat/completions", openaiBody, {headers: headers});
@@ -114,6 +121,8 @@ const summarizeArticle = async (articles, setArticles) => {
 function App() {
   var stuffFromLocalStorage = JSON.parse(localStorage.getItem('articles')) || [];
   const [articles, setArticles] = useState(stuffFromLocalStorage);
+  const openaiApiKeyRef = useRef(null);
+  const promptRef = useRef(null);
 
   useEffect(() => {
     console.log(articles);
@@ -121,10 +130,28 @@ function App() {
   }, [articles]);
 
   return (
-    <div className="App">
-      <button type="button" className="btn btn-danger" onClick={() => fetchLink(articles, setArticles)}>
+    <div className="App night-sky-background">
+      <button type="button" className="btn btn-danger" onClick={() => fetchLink(articles, setArticles, openaiApiKeyRef, promptRef)}>
         Add article
       </button>
+
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <div className="form-group">
+              <label htmlFor="openaiApiKey" className="custom-label">OpenAI API Key</label>
+              <input type="text" className="form-control" id="openaiApiKey" placeholder="sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv" ref={openaiApiKeyRef} />
+            </div>
+          </div>
+          <div className="col">
+            <div className="form-group">
+              <label htmlFor="prompt" className="custom-label">Prompt</label>
+              <input type="text" className="form-control" id="prompt" placeholder="FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!" ref={promptRef} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {articles.map((article, articleIndex) => (
         <div key={articleIndex} className="card text-center" style={{margin: "90px"}}>
           <div className="row no-gutters">

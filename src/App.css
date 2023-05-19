@@ -1,3 +1,16 @@
+.custom-label {
+  color: yellow; /* Choose the desired color */
+  font-weight: bold; /* Add any other desired styles */
+}
+
+.App.night-sky-background {
+  background-color: navy;
+  background-image: url("night-sky.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .App {
   text-align: center;
 }
