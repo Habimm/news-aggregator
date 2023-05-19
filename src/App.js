@@ -1,5 +1,6 @@
 import "./App.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import "bootstrap/dist/js/bootstrap.bundle.min";
 import axios from 'axios';
 import cheerio from 'cheerio';
 import React, { useEffect, useState, useRef } from "react";
@@ -119,7 +120,11 @@ function App() {
 
   return (
     <div className="App night-sky-background">
-      <button type="button" className="btn btn-danger" onClick={() => addArticle(articles, setArticles, openaiApiKeyRef, promptRef)}>
+      <button
+        type="button"
+        className="btn btn-danger plus-button"
+        onClick={() => addArticle(articles, setArticles, openaiApiKeyRef, promptRef)}
+      >
         Add article
       </button>
 
@@ -138,7 +143,16 @@ function App() {
                 <input type="text" className="form-control" id="prompt" ref={promptRef} />
               </div>
               <div className="col">
-                <button type="button" className="btn btn-primary" onClick={handleDefaultPromptClick}>Default Prompt</button>
+                <div className="dropdown">
+                  <button className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Select Prompt
+                  </button>
+                  <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 1")}>Prompt 1</a>
+                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 2")}>Prompt 2</a>
+                    <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Prompt 3")}>Prompt 3</a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

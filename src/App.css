@@ -1,6 +1,8 @@
-.resizable-input {
-  resize: vertical; /* or 'horizontal' if you want to allow horizontal resizing */
-  height: 150px; /* Adjust the height to make the input field bigger */
+.plus-button {
+  position: fixed;
+  bottom: 20px; /* Adjust the distance from the bottom as needed */
+  right: 20px; /* Adjust the distance from the right as needed */
+  z-index: 100;
 }
 
 .custom-label {
