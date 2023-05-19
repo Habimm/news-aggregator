@@ -8,7 +8,18 @@ async function fetchLinks(numberOfLinks) {
   const corsProxyUrl = 'https://thingproxy.freeboard.io/fetch/';
   const baseUrlWithCorsHeaders = `${corsProxyUrl}${baseUrl}`;
 
-  const response = await axios.get(baseUrlWithCorsHeaders);
+  let retries = 10;
+  var response = null;
+  for(let i = 0; i < retries; i++) {
+      try {
+          response = await axios.get(baseUrlWithCorsHeaders);
+          console.log(response.data); // or do whatever you need with the response
+          break;
+      } catch(err) {
+          console.error(`Attempt ${i+1} failed - retrying...`);
+      }
+  }
+
   const $ = cheerio.load(response.data);
 
   const storyLinks = $('section.story-wrapper a').toArray();
@@ -20,7 +31,18 @@ async function fetchLinks(numberOfLinks) {
     fullLink = `${corsProxyUrl}${fullLink}`;
 
     // Fetch additional data for this link
-    const articleResponse = await axios.get(fullLink);
+    let retries = 10;
+    var articleResponse = null;
+    for(let i = 0; i < retries; i++) {
+        try {
+            articleResponse = await axios.get(fullLink);
+            console.log(response.data); // or do whatever you need with the response
+            break;
+        } catch(err) {
+            console.error(`Attempt ${i+1} failed - retrying...`);
+        }
+    }
+
     const article$ = cheerio.load(articleResponse.data);
 
     const title = article$('h1').text();  // Change this line based on the actual CSS selector for the title
@@ -39,7 +61,17 @@ async function fetchLinks(numberOfLinks) {
 async function getArticleText(articleUrl) {
   let newsText = [];
 
-  const response = await axios.get(articleUrl);
+  let retries = 10;
+
+  var response = null;
+  for(let i = 0; i < retries; i++) {
+      try {
+          response = await axios.get(articleUrl);
+          break;
+      } catch(err) {
+          console.error(`Attempt ${i+1} failed - retrying...`);
+      }
+  }
 
   const $ = cheerio.load(response.data);
 
