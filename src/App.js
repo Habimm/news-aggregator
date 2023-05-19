@@ -4,54 +4,29 @@ import cheerio from 'cheerio';
 import React, { useEffect, useState } from "react";
 
 async function fetchLinks(numberOfLinks) {
-  const baseUrl = 'https://www.nytimes.com/';
-  const corsProxyUrl = 'https://thingproxy.freeboard.io/fetch/';
-  const baseUrlWithCorsHeaders = `${corsProxyUrl}${baseUrl}`;
-
-  let retries = 10;
-  var response = null;
-  for(let i = 0; i < retries; i++) {
-      try {
-          response = await axios.get(baseUrlWithCorsHeaders);
-          console.log(response.data); // or do whatever you need with the response
-          break;
-      } catch(err) {
-          console.error(`Attempt ${i+1} failed - retrying...`);
-      }
-  }
-
+  const baseUrl = 'https://www.tagesschau.de';
+  const response = await axios.get(baseUrl);
   const $ = cheerio.load(response.data);
 
-  const storyLinks = $('section.story-wrapper a').toArray();
+  const teaserLinks = $('a.teaser__link').toArray();
   const articles = [];
 
-  for (let i = 0; i < numberOfLinks && i < storyLinks.length; i++) {
-    const href = $(storyLinks[i]).attr('href');
-    var fullLink = (href.startsWith('http')) ? href : baseUrl + href;
-    fullLink = `${corsProxyUrl}${fullLink}`;
+  for (let i = 0; i < numberOfLinks && i < teaserLinks.length; i++) {
+    const href = $(teaserLinks[i]).attr('href');
+    const fullLink = baseUrl + href;
 
     // Fetch additional data for this link
-    let retries = 10;
-    var articleResponse = null;
-    for(let i = 0; i < retries; i++) {
-        try {
-            articleResponse = await axios.get(fullLink);
-            console.log(response.data); // or do whatever you need with the response
-            break;
-        } catch(err) {
-            console.error(`Attempt ${i+1} failed - retrying...`);
-        }
-    }
-
+    const articleResponse = await axios.get(fullLink);
     const article$ = cheerio.load(articleResponse.data);
 
-    const title = article$('h1').text();  // Change this line based on the actual CSS selector for the title
-    const date = article$('time').attr('datetime');  // Change this line based on the actual CSS selector for the date
+    const imageSrc = article$('img.ts-image').attr('src');
+    const date = article$('p.metatextline').text();
 
     articles.push({
       url: fullLink,
-      title: title,
+      imageSrc: imageSrc,
       date: date,
+      summary: null,
     });
   }
 
@@ -61,33 +36,25 @@ async function fetchLinks(numberOfLinks) {
 async function getArticleText(articleUrl) {
   let newsText = [];
 
-  let retries = 10;
-
-  var response = null;
-  for(let i = 0; i < retries; i++) {
-      try {
-          response = await axios.get(articleUrl);
-          break;
-      } catch(err) {
-          console.error(`Attempt ${i+1} failed - retrying...`);
-      }
-  }
-
+  const response = await axios.get(articleUrl);
   const $ = cheerio.load(response.data);
 
-  const h1Text = $('h1[data-testid="headline"]').text().trim();
-  newsText.push(h1Text);
+  const ancestor = $('article.container.content-wrapper__group');
 
-  const pText = $('p#article-summary').text().trim();
-  newsText.push(pText);
+  const classes = ['seitenkopf__headline', 'meldung__subhead', 'textabsatz', 'tag-btn'];
 
-  $('.StoryBodyCompanionColumn').each((i, element) => {
-    newsText.push($(element).text().trim());
+  ancestor.find('h1, h2, p, a').each((i, element) => {
+    const elClass = $(element).attr('class') || '';
+    if(classes.some(cls => elClass.includes(cls))) {
+      newsText.push($(element).text().trim());
+    }
   });
 
-  var wholeNewsText = newsText.join('\n');
+  ancestor.find('p, h2').each(() => {
+    newsText.push('');
+  });
 
-  return wholeNewsText;
+  return newsText.join('\n');
 }
 
 const fetchArticles = async (setArticles) => {
