@@ -164,9 +164,9 @@ function App() {
                       Select Prompt
                     </button>
                     <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!")}>FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!</a>
-                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.")}>summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.</a>
-                      <a className="dropdown-item" href="#" onClick={() => handleDefaultPromptClick("Summarize in one word:")}>Summarize in one word:</a>
+                      <button className="dropdown-item" onClick={() => handleDefaultPromptClick("FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!")}>FASSE IN EINEM EINZIGEN SATZ FÜR EINEN 12-JÄHRIGEN ZUSAMMEN. MIT HÖCHSTENS 25 WORTEN!</button>
+                      <button className="dropdown-item" onClick={() => handleDefaultPromptClick("summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.")}>summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.</button>
+                      <button className="dropdown-item" onClick={() => handleDefaultPromptClick("Summarize in one word:")}>Summarize in one word:</button>
                     </div>
                   </div>
                 </div>
