@@ -72,29 +72,52 @@ async function addArticle(articles, setArticles, openaiApiKeyRef, promptRef) {
   // in the scraped article.
   articleWithPrompt += "\n";
 
+  document.body.classList.add("loading");
   try {
     const openaiBody = {
       model: 'gpt-3.5-turbo',
       messages: [{ role: 'user', content: articleWithPrompt }],
     };
+
     console.log("Sent to OpenAI:");
     console.log(openaiBody);
 
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${openaiApiKey}`,
-    };
+    var responseWithSummary = null;
+    try {
+      // On this local port, you should run the OpenAI forwarder,
+      // also introduced at the tutorial on Medium
 
-    const response = await axios.post("https://api.openai.com/v1/chat/completions", openaiBody, {headers: headers});
-    const computedSummary = response.data.choices[0].message.content;
+      responseWithSummary = await axios.post('http://localhost:5000/', openaiBody);
 
-    article['summary'] = computedSummary;
+    } catch (error) {
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error(`Error: ${error.response.data}`);
+        if (error.response.status === 401) {
+          // Handle 401 error here
+          console.error('Unauthorized request. Check your API key inside the OpenAI Forwarder. Then restart the OpenAI Forwarder.');
+          window.alert('Unauthorized request. Please check your API key inside the OpenAI Forwarder. Then restart the OpenAI Forwarder.');
+        } else {
+          // Handle other errors here
+          console.error(`Error status: ${error.response.status}`);
+          window.alert(`An error occurred. Please check your setup. Status code: ${error.response.status}`);
+        }
+      } else {
+        // The request was made but no response was received
+        console.error(`Error in setup: ${error.message}`);
+        window.alert(`No key manager found. Please setup the key manager from: https://github.com/Habimm/openai-keymanager`);
+      }
+    }
+
+    article['summary'] = responseWithSummary.data.choices[0].message.content;
     const newArticles = [...articles, article];
     setArticles(newArticles);
 
   } catch (error) {
     console.error(`An error occurred during the API call: ${error}`);
-    window.alert(`An error occurred. Could the OpenAI API Key be incorrect?\nError: ${error}`);
+  } finally {
+    document.body.classList.remove("loading");
   }
 
   return article;
@@ -128,7 +151,7 @@ function App() {
           <div className="row">
             <div className="col">
               <div className="form-group">
-                <label htmlFor="openaiApiKey" className="custom-label">OpenAI API Key</label>
+                <label htmlFor="openaiApiKey" className="custom-label"><a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener noreferrer" className="card-text">OpenAI API Key</a></label>
                 <input type="text" className="form-control" id="openaiApiKey" placeholder="sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv" ref={openaiApiKeyRef} />
               </div>
             </div>
