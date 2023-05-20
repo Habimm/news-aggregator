@@ -29,7 +29,7 @@ async function getArticleText(articleUrl) {
   return newsText.join('\n');
 }
 
-async function addArticle(articles, setArticles, openaiApiKeyRef, promptRef) {
+async function addArticle(articles, setArticles, promptRef) {
   const baseUrl = 'https://www.tagesschau.de';
   const response = await axios.get(baseUrl);
   const $ = cheerio.load(response.data);
@@ -53,9 +53,9 @@ async function addArticle(articles, setArticles, openaiApiKeyRef, promptRef) {
     summary: null,
   };
 
-  // Summarize the article's text, or do whatever the prompt says.
+  // All of the following code is for
+  // summarizing the article's text, or doing whatever the prompt says.
 
-  const openaiApiKey = openaiApiKeyRef.current.value;
   const prompt = promptRef.current.value;
 
   var articleUrl = article['url'];
@@ -126,8 +126,11 @@ async function addArticle(articles, setArticles, openaiApiKeyRef, promptRef) {
 function App() {
   var stuffFromLocalStorage = JSON.parse(localStorage.getItem('articles')) || [];
   const [articles, setArticles] = useState(stuffFromLocalStorage);
-  const openaiApiKeyRef = useRef(null);
   const promptRef = useRef(null);
+
+  useEffect(() => {
+    handleDefaultPromptClick("summarize this for a five-year old. keep it funny and teach the five-year old valuable life lessons related to the news.")
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('articles', JSON.stringify(articles));
@@ -142,19 +145,13 @@ function App() {
       <button
         type="button"
         className="btn btn-danger plus-button btn-lg"
-        onClick={() => addArticle(articles, setArticles, openaiApiKeyRef, promptRef)}
+        onClick={() => addArticle(articles, setArticles, promptRef)}
       >
         Add article ➕
       </button>
 
       <div className="container">
           <div className="row">
-            <div className="col">
-              <div className="form-group">
-                <label htmlFor="openaiApiKey" className="custom-label"><a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener noreferrer" className="card-text">OpenAI API Key</a></label>
-                <input type="text" className="form-control" id="openaiApiKey" placeholder="sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv" ref={openaiApiKeyRef} />
-              </div>
-            </div>
             <div className="col">
               <div className="row">
                 <div className="form-group">
